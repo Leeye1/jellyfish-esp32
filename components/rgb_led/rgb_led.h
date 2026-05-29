@@ -1,0 +1,58 @@
+#ifndef RGB_LED_H
+#define RGB_LED_H
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define RGB_LED_COUNT 30  // WS2812 LED strip has 30 pixels
+
+// 初始化RGB灯带（30个LED）
+void rgb_led_init(void);
+
+// 对整条LED设置同一颜色
+void rgb_led_set_color(uint8_t red, uint8_t green, uint8_t blue);
+
+// 设置单个LED的颜色
+// @param index: LED索引 (0-29)
+// @param red, green, blue: 颜色值 (0-255)
+void rgb_led_set_pixel(uint8_t index, uint8_t red, uint8_t green, uint8_t blue);
+
+// 关闭所有LED
+void rgb_led_clear(void);
+
+// 刷新LED显示
+void rgb_led_refresh(void);
+
+/**
+ * @brief 启动平滑渐变到目标颜色
+ * @param target_r, target_g, target_b: 目标RGB值 (0-255)
+ * @param duration_ms: 渐变持续时间（毫秒）
+ * 
+ * 内部状态机会在后续的 rgb_led_update() 调用中进行线性插值
+ */
+void rgb_led_set_color_smooth(uint8_t target_r, uint8_t target_g, uint8_t target_b, uint32_t duration_ms);
+
+/**
+ * @brief 设置显示模式并自动管理动画
+ * @param is_alarm true=告警红色闪烁, false=深海呼吸渐变
+ *
+ * 调用一次即可，rgb_led_update() 会持续处理帧动画。
+ */
+void rgb_led_display_state(bool is_alarm);
+
+/**
+ * @brief 更新LED动画状态（应在每个刷新周期调用，如100ms）
+ * 
+ * 根据当前时间进行线性插值计算，并刷新LED显示
+ */
+void rgb_led_update(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // RGB_LED_H
