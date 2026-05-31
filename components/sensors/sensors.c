@@ -4,6 +4,7 @@
 #include "driver/adc.h"
 
 #include "esp_log.h"
+#include "esp_random.h"
 
 static const char* TAG = "sensors";
 
@@ -75,7 +76,15 @@ sensor_data_t sensors_read_all(void)
 {
     sensor_data_t d = {0};
 
-    // 从盐度传感器读取温度和盐度（一次 Modbus 事务）
+#ifdef DEMO_MODE
+    d.temperature_c = sensors_add_random_offset(25.0f);
+    d.ph = sensors_add_random_offset(8.2f);
+    d.dissolved_oxygen = sensors_add_random_offset(7.5f);
+    d.do_saturation = sensors_add_random_offset_with_range(0.90f, 0.02f);
+    d.salinity = sensors_add_random_offset(33.5f);
+    ESP_LOGI(TAG, "Sensors (demo): T=%.2f°C  DO=%.2f mg/L(%.0f%%)  pH=%.2f  Sal=%.2f ppt",
+             d.temperature_c, d.dissolved_oxygen, d.do_saturation * 100, d.ph, d.salinity);
+#else
     float sal_temp = 0.0f;
     if (rs485_read_salinity(RS485_SALINITY_SLAVE_ID, &d.salinity, &sal_temp) == ESP_OK) {
         d.temperature_c = sal_temp;
@@ -83,7 +92,6 @@ sensor_data_t sensors_read_all(void)
         ESP_LOGW(TAG, "Failed to read salinity sensor");
     }
 
-    // 从DO传感器读取溶解氧（饱和度+浓度，一次 Modbus 事务）
     float do_sat = 0.0f;
     if (rs485_read_do(RS485_DO_SLAVE_ID, &do_sat, &d.dissolved_oxygen, NULL) == ESP_OK) {
         d.do_saturation = do_sat;
@@ -95,7 +103,22 @@ sensor_data_t sensors_read_all(void)
 
     ESP_LOGI(TAG, "T=%.2f°C  DO=%.2f mg/L(%.0f%%)  pH=%.2f  Sal=%.2f ppt",
              d.temperature_c, d.dissolved_oxygen, d.do_saturation * 100, d.ph, d.salinity);
+#endif
     return d;
+}
+
+float sensors_add_random_offset(float reference_value)
+{
+    return sensors_add_random_offset_with_range(reference_value, 0.2f);
+}
+
+float sensors_add_random_offset_with_range(float reference_value, float offset)
+{
+    float min_value = reference_value - offset;
+    float max_value = reference_value + offset;
+    uint32_t random_uint = esp_random();
+    float random_normalized = (float)(random_uint % 10000) / 10000.0f;
+    return min_value + random_normalized * (max_value - min_value);
 }
 
 bool sensors_is_ph_out_of_range(float ph)
