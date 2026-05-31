@@ -37,9 +37,6 @@ void o2_pump_set(bool on);
 /** @brief 加热棒开关 */
 void heater_set(bool on);
 
-/** @brief 内循环泵开关（向后兼容，true=全速，false=停止） */
-void circ_pump_set(bool on);
-
 /** @brief 内循环泵 PWM 初始化（LEDC timer0，1kHz，10-bit） */
 void circ_pump_pwm_init(void);
 
@@ -87,7 +84,6 @@ void water_pump_control_smart(float ph, float salinity);
 bool o2_pump_get_state(void);
 bool heater_get_state(void);
 bool water_pump_get_state(void);
-bool circ_pump_get_state(void);
 
 #ifdef __cplusplus
 }

@@ -2,7 +2,6 @@
 #define GPIO_CONFIG_H
 
 #include <stdint.h>
-#include <stdbool.h>
 #include "driver/adc.h"
 
 #ifdef __cplusplus
@@ -34,9 +33,6 @@ extern "C" {
 // 注意：GPIO36, GPIO39, GPIO34, GPIO35 因 PSRAM (GPIO33~GPIO37) 限制已禁用
 // 重新分配至可用的 ADC 通道，避免冲突
 #define ADC_PH_CHANNEL     ADC1_CHANNEL_0 // GPIO1 (replaced from GPIO36)
-
-// pH probe digital interrupt or analog pin
-#define GPIO_PH_ALERT      4   // 可选
 
 // 初始化所有 GPIO（输入/输出、PWM/ADC）
 void gpio_config_init(void);

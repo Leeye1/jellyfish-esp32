@@ -4,21 +4,9 @@
 #include "gpio_config.h"
 #include "esp_log.h"
 #include "esp_timer.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 
 static led_strip_handle_t led_strip;
 static const char* TAG = "rgb_led";
-
-// ── 深海呼吸·蓝白渐变参数 ────────────────────
-#define DEEP_BLUE_R   0
-#define DEEP_BLUE_G   0
-#define DEEP_BLUE_B   60
-#define MOON_WHITE_R  80
-#define MOON_WHITE_G  95
-#define MOON_WHITE_B  110
-#define BREATH_HALF_CYCLE_MS 10000
-#define BLINK_PERIOD_MS      500
 
 // ── 五彩渐变·颜色参数 ────────────────────────
 #define COLORFUL_GRADIENT_MS 60000  // 完整循环时间 60秒（每种颜色渐变10秒）
@@ -51,12 +39,6 @@ typedef struct {
 
 static animation_state_t s_animation = {0};
 
-// ── 显示模式状态 ─────────────────────────────
-static bool s_alarm_mode = true;
-static bool s_breath_direction = true;  // true=向上(深蓝→月白), false=向下
-static int64_t s_last_blink_us = 0;
-static bool s_blink_on = false;
-
 void rgb_led_init(void)
 {
     // 初始化 30 个 WS2812 LED
@@ -86,12 +68,9 @@ void rgb_led_init(void)
     }
 
     led_strip_clear(led_strip);
-    s_animation.current_r = DEEP_BLUE_R;
-    s_animation.current_g = DEEP_BLUE_G;
-    s_animation.current_b = DEEP_BLUE_B;
-    for (int i = 0; i < RGB_LED_COUNT; i++) {
-        led_strip_set_pixel(led_strip, i, DEEP_BLUE_R, DEEP_BLUE_G, DEEP_BLUE_B);
-    }
+    s_animation.current_r = 0;
+    s_animation.current_g = 0;
+    s_animation.current_b = 0;
     led_strip_refresh(led_strip);
     ESP_LOGI(TAG, "RGB LED strip initialized with %d pixels", RGB_LED_COUNT);
 }
@@ -119,12 +98,6 @@ void rgb_led_set_color(uint8_t red, uint8_t green, uint8_t blue)
     led_strip_refresh(led_strip);
 }
 
-void rgb_led_set_pixel(uint8_t index, uint8_t red, uint8_t green, uint8_t blue)
-{
-    if (!led_strip || index >= RGB_LED_COUNT) return;
-    led_strip_set_pixel(led_strip, index, red, green, blue);
-}
-
 void rgb_led_clear(void)
 {
     if (!led_strip) return;
@@ -140,24 +113,6 @@ void rgb_led_refresh(void)
 {
     if (!led_strip) return;
     led_strip_refresh(led_strip);
-}
-
-void rgb_led_display_state(bool is_alarm)
-{
-    if (is_alarm == s_alarm_mode) return;
-
-    s_alarm_mode = is_alarm;
-    s_animation.is_animating = false;
-
-    if (is_alarm) {
-        rgb_led_set_color(255, 0, 0);
-        s_last_blink_us = esp_timer_get_time();
-        s_blink_on = true;
-    } else {
-        s_breath_direction = true;
-        rgb_led_set_color(DEEP_BLUE_R, DEEP_BLUE_G, DEEP_BLUE_B);
-        rgb_led_set_color_smooth(MOON_WHITE_R, MOON_WHITE_G, MOON_WHITE_B, BREATH_HALF_CYCLE_MS);
-    }
 }
 
 void rgb_led_set_color_smooth(uint8_t target_r, uint8_t target_g, uint8_t target_b, uint32_t duration_ms)
@@ -215,7 +170,6 @@ void rgb_led_colorful_gradient(void)
 {
     if (!led_strip) return;
     
-    s_alarm_mode = false;  // 退出告警模式，启用彩色渐变
     s_animation.is_colorful_mode = true;
     s_animation.is_animating = true;
     s_animation.current_color_index = 0;
@@ -246,16 +200,6 @@ void rgb_led_colorful_gradient(void)
 void rgb_led_update(void)
 {
     if (!led_strip) return;
-
-    if (s_alarm_mode) {
-        int64_t now = esp_timer_get_time();
-        if ((now - s_last_blink_us) >= BLINK_PERIOD_MS * 1000) {
-            s_last_blink_us = now;
-            s_blink_on = !s_blink_on;
-            rgb_led_set_color(s_blink_on ? 255 : 0, 0, 0);
-        }
-        return;
-    }
 
     // 彩色渐变模式处理
     if (s_animation.is_colorful_mode && s_animation.is_animating) {
@@ -305,14 +249,7 @@ void rgb_led_update(void)
         s_animation.current_r = s_animation.target_r;
         s_animation.current_g = s_animation.target_g;
         s_animation.current_b = s_animation.target_b;
-
-        // 呼吸模式：自动翻转方向，启动下一阶段
-        s_breath_direction = !s_breath_direction;
-        if (s_breath_direction) {
-            rgb_led_set_color_smooth(MOON_WHITE_R, MOON_WHITE_G, MOON_WHITE_B, BREATH_HALF_CYCLE_MS);
-        } else {
-            rgb_led_set_color_smooth(DEEP_BLUE_R, DEEP_BLUE_G, DEEP_BLUE_B, BREATH_HALF_CYCLE_MS);
-        }
+        s_animation.is_animating = false;
     } else {
         float progress = (float)elapsed_ms / (float)s_animation.duration_ms;
 

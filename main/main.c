@@ -65,15 +65,6 @@ static void set_system_state(system_state_t state)
     portEXIT_CRITICAL(&s_lock);
 }
 
-static system_state_t get_system_state(void)
-{
-    system_state_t state;
-    portENTER_CRITICAL(&s_lock);
-    state = s_state;
-    portEXIT_CRITICAL(&s_lock);
-    return state;
-}
-
 static void task_sensor_read(void *arg)
 {
     (void)arg;
@@ -113,7 +104,9 @@ static void task_control_logic(void *arg)
         // ── 执行器控制 ─────────────────────────
         o2_pump_control_smart(data.do_saturation);
         heater_control_smart(data.temperature_c);
-        water_pump_control_smart(data.ph, data.salinity);
+        if (!s_manual_water_mode) {
+            water_pump_control_smart(data.ph, data.salinity);
+        }
 
         buzzer_set(temp_bad || water_bad);
 
@@ -201,7 +194,7 @@ static void task_button_handler(void *arg)
 static void task_led_effect(void *arg)
 {
     (void)arg;
-    // 启动五彩斑斓渐变特效（2.5秒循环）
+    // 启动五彩斑斓渐变特效（60秒循环）
     rgb_led_colorful_gradient();
 
     while (true) {
@@ -221,7 +214,6 @@ void app_main(void)
     network_init();
 
     // Normal baseline: O2 pump always on, others off.
-    // 注释掉以解决 brownout（功率不足）问题
     o2_pump_set(true);
     circ_pump_pwm_init();
     circ_pump_set_speed(35);
@@ -229,7 +221,6 @@ void app_main(void)
     pump_control(1, actuator_off);
     pump_control(2, actuator_off);
     buzzer_set(false);
-    // rgb_led_set_color(0, 255, 0);
     rgb_led_clear();
 
     s_evt = xEventGroupCreate();

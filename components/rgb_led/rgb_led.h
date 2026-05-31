@@ -16,11 +16,6 @@ void rgb_led_init(void);
 // 对整条LED设置同一颜色
 void rgb_led_set_color(uint8_t red, uint8_t green, uint8_t blue);
 
-// 设置单个LED的颜色
-// @param index: LED索引 (0-29)
-// @param red, green, blue: 颜色值 (0-255)
-void rgb_led_set_pixel(uint8_t index, uint8_t red, uint8_t green, uint8_t blue);
-
 // 关闭所有LED
 void rgb_led_clear(void);
 
@@ -44,14 +39,6 @@ void rgb_led_set_color_smooth(uint8_t target_r, uint8_t target_g, uint8_t target
  * 调用一次即可自动循环，需要在主程序中持续调用 rgb_led_update() 
  */
 void rgb_led_colorful_gradient(void);
-
-/**
- * @brief 设置显示模式并自动管理动画
- * @param is_alarm true=告警红色闪烁, false=深海呼吸渐变
- *
- * 调用一次即可，rgb_led_update() 会持续处理帧动画。
- */
-void rgb_led_display_state(bool is_alarm);
 
 /**
  * @brief 更新LED动画状态（应在每个刷新周期调用，如100ms）

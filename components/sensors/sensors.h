@@ -2,7 +2,6 @@
 #define SENSORS_H
 
 #include <stdbool.h>
-#include "driver/adc.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,13 +32,7 @@ void sensors_init(void);
 sensor_data_t sensors_read_all(void);
 
 // 读取单项
-float sensors_read_temperature(void);
 float sensors_read_ph(void);
-float sensors_read_dissolved_oxygen(void);
-float sensors_read_salinity(void);
-
-// ADC 原始读数转换为电压
-float adc_to_voltage(adc1_channel_t channel);
 
 // 阈值判断 — 返回 true 表示超出安全范围
 bool sensors_is_ph_out_of_range(float ph);
@@ -49,21 +42,6 @@ bool sensors_is_salinity_out_of_range(float salinity);
 
 // 综合判断：盐度/pH/DO 任一超范围（换水触发条件）
 bool sensors_needs_water_change(const sensor_data_t *data);
-
-/**
- * @brief 返回参考值±0.2范围内的随机值
- * @param reference_value 参考值
- * @return 在 [reference_value - 0.2, reference_value + 0.2] 范围内的随机值
- */
-float sensors_add_random_offset(float reference_value);
-
-/**
- * @brief 返回参考值±offset范围内的随机值
- * @param reference_value 参考值
- * @param offset 偏移范围（例如 0.2 表示 ±0.2）
- * @return 在 [reference_value - offset, reference_value + offset] 范围内的随机值
- */
-float sensors_add_random_offset_with_range(float reference_value, float offset);
 
 #ifdef __cplusplus
 }

@@ -32,17 +32,4 @@ void buzzer_set(bool enabled)
     ESP_LOGI(TAG, "Buzzer %s", enabled ? "ON" : "OFF");
 }
 
-void buzzer_beep(uint8_t count, uint16_t duration_ms, uint16_t interval_ms)
-{
-    ESP_LOGI(TAG, "Playing %d beeps (duration=%dms, interval=%dms)", count, duration_ms, interval_ms);
-    
-    for (uint8_t i = 0; i < count; i++) {
-        buzzer_set(true);
-        vTaskDelay(pdMS_TO_TICKS(duration_ms));
-        
-        buzzer_set(false);
-        if (i < count - 1) {
-            vTaskDelay(pdMS_TO_TICKS(interval_ms));
-        }
-    }
-}
+

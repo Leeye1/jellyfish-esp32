@@ -4,7 +4,6 @@
 #include "driver/adc.h"
 
 #include "esp_log.h"
-#include "esp_random.h"
 
 static const char* TAG = "sensors";
 
@@ -38,19 +37,6 @@ void sensors_init(void)
     ESP_LOGI(TAG, "Sensors initialized");
 }
 
-float sensors_read_temperature(void)
-{
-    // 温度从盐度传感器读取（精度更高）
-    float temp = 0.0f;
-
-    if (rs485_read_salinity(RS485_SALINITY_SLAVE_ID, NULL, &temp) == ESP_OK) {
-        return temp;
-    }
-
-    ESP_LOGW(TAG, "Failed to read temperature from RS485");
-    return 0.0f;
-}
-
 float sensors_read_ph(void)
 {
     // pH 传感器模拟输出经分压后接 ADC
@@ -65,7 +51,7 @@ float sensors_read_ph(void)
     //   注意: 每换一种溶液前须用去离子水清洗电极
     
     int raw = adc1_get_raw(ADC_PH_CHANNEL);
-    float v = raw * (ADC_REF_VOLTAGE / 4095.0f);
+    float v = adc_to_voltage(ADC_PH_CHANNEL);
 
     if (raw < 10) {
         ESP_LOGW(TAG, "pH ADC raw is near zero (raw=%d, ch=%d). Check pH probe power/signal wiring.",
@@ -84,62 +70,11 @@ float sensors_read_ph(void)
     return ph;
 }
 
-float sensors_read_dissolved_oxygen(void)
-{
-    // 溶解氧传感器通过RS485 Modbus-RTU通信
-    // 波特率：9600 baud (固定)
-    // 从设备地址：RS485_DO_SLAVE_ID (0x02)
-    // 寄存器0x0002~0x0003：溶解氧浓度（mg/L，浮点数）
-    
-    float do_mgL = 0.0f;
-    
-    esp_err_t err = rs485_read_do(RS485_DO_SLAVE_ID, NULL, &do_mgL, NULL);
-    
-    if (err == ESP_OK) {
-        ESP_LOGD(TAG, "Dissolved oxygen: %.2f mg/L", do_mgL);
-        return do_mgL;
-    } else {
-        ESP_LOGW(TAG, "Failed to read dissolved oxygen from RS485");
-        return 0.0f;
-    }
-}
-
-float sensors_read_salinity(void)
-{
-    // 盐度传感器通过RS485 Modbus-RTU通信
-    // 波特率：9600 baud (固定)
-    // 从设备地址：RS485_SALINITY_SLAVE_ID (0x01)
-    // 寄存器0x0000：盐度（16位无符号整数）
-    // 实际值 = 寄存器值 / 100 (ppt)
-    
-    float salinity_ppt = 0.0f;
-    
-    esp_err_t err = rs485_read_salinity(RS485_SALINITY_SLAVE_ID, &salinity_ppt, NULL);
-    
-    if (err == ESP_OK) {
-        ESP_LOGD(TAG, "Salinity: %.2f ppt", salinity_ppt);
-        return salinity_ppt;
-    } else {
-        ESP_LOGW(TAG, "Failed to read salinity from RS485");
-        return 0.0f;
-    }
-}
-
 // 读取所有传感器并返回结构体
 sensor_data_t sensors_read_all(void)
 {
     sensor_data_t d = {0};
 
-#ifdef DEMO_MODE
-    // 演示模式：返回参考值加随机偏移的数据
-    d.temperature_c = sensors_add_random_offset(25.0f);
-    d.ph = sensors_add_random_offset(8.2f);
-    d.dissolved_oxygen = sensors_add_random_offset(7.5f);
-    d.do_saturation = sensors_add_random_offset_with_range(0.90f, 0.02f);
-    d.salinity = sensors_add_random_offset(33.5f);
-    ESP_LOGI(TAG, "Sensors (demo): T=%.2f°C  DO=%.2f mg/L(%.0f%%)  pH=%.2f  Sal=%.2f ppt",
-             d.temperature_c, d.dissolved_oxygen, d.do_saturation * 100, d.ph, d.salinity);
-#else
     // 从盐度传感器读取温度和盐度（一次 Modbus 事务）
     float sal_temp = 0.0f;
     if (rs485_read_salinity(RS485_SALINITY_SLAVE_ID, &d.salinity, &sal_temp) == ESP_OK) {
@@ -160,7 +95,6 @@ sensor_data_t sensors_read_all(void)
 
     ESP_LOGI(TAG, "T=%.2f°C  DO=%.2f mg/L(%.0f%%)  pH=%.2f  Sal=%.2f ppt",
              d.temperature_c, d.dissolved_oxygen, d.do_saturation * 100, d.ph, d.salinity);
-#endif
     return d;
 }
 
@@ -191,32 +125,4 @@ bool sensors_needs_water_change(const sensor_data_t *data)
         || sensors_is_salinity_out_of_range(data->salinity);
 }
 
-/**
- * @brief 返回参考值±0.2范围内的随机值
- * @param reference_value 参考值
- * @return 在 [reference_value - 0.2, reference_value + 0.2] 范围内的随机值
- */
-float sensors_add_random_offset(float reference_value)
-{
-    return sensors_add_random_offset_with_range(reference_value, 0.2f);
-}
 
-/**
- * @brief 返回参考值±offset范围内的随机值
- * @param reference_value 参考值
- * @param offset 偏移范围（例如 0.2 表示 ±0.2）
- * @return 在 [reference_value - offset, reference_value + offset] 范围内的随机值
- */
-float sensors_add_random_offset_with_range(float reference_value, float offset)
-{
-    float min_value = reference_value - offset;
-    float max_value = reference_value + offset;
-    
-    // esp_random() 返回 32位无符号整数
-    // 转换为 [0, 1) 范围的浮点数
-    uint32_t random_uint = esp_random();
-    float random_normalized = (float)(random_uint % 10000) / 10000.0f;  // [0, 1)
-    
-    // 线性映射到 [min_value, max_value]
-    return min_value + random_normalized * (max_value - min_value);
-}

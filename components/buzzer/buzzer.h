@@ -23,15 +23,6 @@ void buzzer_init(void);
  */
 void buzzer_set(bool enabled);
 
-/**
- * @brief Play a beep pattern (useful for test/alarm)
- * 
- * @param count Number of beeps
- * @param duration_ms Duration of each beep in milliseconds
- * @param interval_ms Interval between beeps in milliseconds
- */
-void buzzer_beep(uint8_t count, uint16_t duration_ms, uint16_t interval_ms);
-
 #ifdef __cplusplus
 }
 #endif

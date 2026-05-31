@@ -3,8 +3,6 @@
 #include "driver/gpio.h"
 #include "driver/ledc.h"
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "sensors.h"
 
 static const char* TAG = "ACTUATOR";
@@ -66,11 +64,6 @@ void o2_pump_set(bool on)
 void heater_set(bool on)
 {
     actuator_control(4, on ? actuator_on : actuator_off);
-}
-
-void circ_pump_set(bool on)
-{
-    circ_pump_set_speed(on ? 100 : 0);
 }
 
 /* ── 内循环泵 PWM 实现 ──────────────────────── */
@@ -205,4 +198,3 @@ void water_pump_control_smart(float ph, float salinity)
 bool o2_pump_get_state(void)    { return s_o2_pump_state; }
 bool heater_get_state(void)     { return s_heater_state; }
 bool water_pump_get_state(void) { return s_water_pump_state; }
-bool circ_pump_get_state(void)  { return s_circ_pump_speed > 0; }

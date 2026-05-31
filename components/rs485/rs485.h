@@ -22,12 +22,6 @@ esp_err_t rs485_set_baudrate(int baudrate);
 // Modbus CRC16 计算（公开接口）
 uint16_t rs485_modbus_crc16(const uint8_t* data, int len);
 
-// 清空接收缓冲区（丢弃所有待读数据）
-void rs485_flush_rx(void);
-
-// 将模块置为发送或接收
-void rs485_set_transmit_mode(bool enable);
-
 // 发送 Modbus/RTU 字节流
 esp_err_t rs485_send_bytes(const uint8_t* data, size_t len);
 

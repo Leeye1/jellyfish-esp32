@@ -91,7 +91,7 @@ esp_err_t rs485_set_baudrate(int baudrate)
     return ESP_OK;
 }
 
-void rs485_set_transmit_mode(bool enable)
+static void rs485_set_transmit_mode(bool enable)
 {
     gpio_set_level(GPIO_RS485_DE_RE, enable ? 1 : 0);
 }
@@ -115,11 +115,6 @@ esp_err_t rs485_send_bytes(const uint8_t* data, size_t len)
     esp_rom_delay_us(byte_us * 3);
     uart_flush_input(UART_NUM_1);
     return (sent == (int)len) ? ESP_OK : ESP_FAIL;
-}
-
-void rs485_flush_rx(void)
-{
-    uart_flush_input(UART_NUM_1);
 }
 
 int rs485_receive_bytes(uint8_t* buffer, size_t max_len)
