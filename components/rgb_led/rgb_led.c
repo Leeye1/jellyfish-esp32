@@ -21,7 +21,7 @@ static const char* TAG = "rgb_led";
 #define BLINK_PERIOD_MS      500
 
 // ── 五彩渐变·颜色参数 ────────────────────────
-#define COLORFUL_GRADIENT_MS 2500  // 完整循环时间 2.5秒
+#define COLORFUL_GRADIENT_MS 60000  // 完整循环时间 60秒（每种颜色渐变10秒）
 typedef struct {
     uint8_t r, g, b;
 } color_t;
@@ -240,7 +240,7 @@ void rgb_led_colorful_gradient(void)
     s_animation.target_g = target_color.g;
     s_animation.target_b = target_color.b;
     
-    ESP_LOGI(TAG, "Colorful gradient started (2.5s cycle)");
+    ESP_LOGI(TAG, "Colorful gradient started (60s cycle, 10s per color)");
 }
 
 void rgb_led_update(void)

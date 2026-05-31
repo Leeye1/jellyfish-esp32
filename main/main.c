@@ -224,7 +224,7 @@ void app_main(void)
     // 注释掉以解决 brownout（功率不足）问题
     o2_pump_set(true);
     circ_pump_pwm_init();
-    circ_pump_set_speed(50);
+    circ_pump_set_speed(35);
     heater_set(false);
     pump_control(1, actuator_off);
     pump_control(2, actuator_off);
