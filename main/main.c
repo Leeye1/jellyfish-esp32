@@ -201,11 +201,10 @@ static void task_button_handler(void *arg)
 static void task_led_effect(void *arg)
 {
     (void)arg;
-    rgb_led_display_state(false);
+    // 启动五彩斑斓渐变特效（2.5秒循环）
+    rgb_led_colorful_gradient();
 
     while (true) {
-        system_state_t state = get_system_state();
-        rgb_led_display_state(state != SYS_NORMAL);
         rgb_led_update();
         vTaskDelay(pdMS_TO_TICKS(100));
     }

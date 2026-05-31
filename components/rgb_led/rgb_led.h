@@ -37,6 +37,15 @@ void rgb_led_refresh(void);
 void rgb_led_set_color_smooth(uint8_t target_r, uint8_t target_g, uint8_t target_b, uint32_t duration_ms);
 
 /**
+ * @brief 启动五彩斑斓渐变效果
+ * 
+ * 颜色序列：红 → 黄 → 绿 → 青 → 蓝 → 紫 → 红
+ * 完整循环时间为 2.5 秒，无限循环
+ * 调用一次即可自动循环，需要在主程序中持续调用 rgb_led_update() 
+ */
+void rgb_led_colorful_gradient(void);
+
+/**
  * @brief 设置显示模式并自动管理动画
  * @param is_alarm true=告警红色闪烁, false=深海呼吸渐变
  *
