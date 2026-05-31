@@ -345,21 +345,3 @@ gpio_config_init() → sensors_init() → rgb_led_init()
 | **其他组件** | 完全相同 | 完全相同 |
 
 ---
-
-## 六、构建 & 烧录
-
-```powershell
-# 前提：激活 ESP-IDF v5.5.3
-C:\esp\v5.5.3\esp-idf\export.ps1
-
-# 首次构建
-idf.py set-target esp32s3
-idf.py build
-
-# 烧录 + 串口监控（COM12）
-idf.py flash monitor
-```
-
-**依赖**：`espressif/led_strip@^3.0.3`（声明于 `main/idf_component.yml`）
-
-**目标芯片**：ESP32-S3-N16R8 | **烧录端口**：COM12 | **波特率**：115200（默认）
