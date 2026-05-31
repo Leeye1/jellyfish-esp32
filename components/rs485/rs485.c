@@ -47,6 +47,8 @@ static float bytes_to_float_be(const uint8_t* bytes)
     return f;
 }
 
+static void rs485_set_transmit_mode(bool enable);
+
 int rs485_get_baudrate(void)
 {
     return current_baudrate;
