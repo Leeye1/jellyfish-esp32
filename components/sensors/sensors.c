@@ -23,7 +23,7 @@ static const char* TAG = "sensors";
 
 // ADC原始读数转换为实际电压（V）
 // ADC1 12-bit: 0..4095 对应 0..ADC_REF_VOLTAGE
-float adc_to_voltage(adc1_channel_t channel)
+static float adc_to_voltage(adc1_channel_t channel)
 {
     int raw = adc1_get_raw(channel);
     return raw * (ADC_REF_VOLTAGE / 4095.0f);
