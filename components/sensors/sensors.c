@@ -71,6 +71,9 @@ float sensors_read_ph(void)
     return ph;
 }
 
+static float sensors_add_random_offset(float reference_value);
+static float sensors_add_random_offset_with_range(float reference_value, float offset);
+
 // 读取所有传感器并返回结构体
 sensor_data_t sensors_read_all(void)
 {
@@ -107,12 +110,12 @@ sensor_data_t sensors_read_all(void)
     return d;
 }
 
-float sensors_add_random_offset(float reference_value)
+static float sensors_add_random_offset(float reference_value)
 {
     return sensors_add_random_offset_with_range(reference_value, 0.2f);
 }
 
-float sensors_add_random_offset_with_range(float reference_value, float offset)
+static float sensors_add_random_offset_with_range(float reference_value, float offset)
 {
     float min_value = reference_value - offset;
     float max_value = reference_value + offset;
